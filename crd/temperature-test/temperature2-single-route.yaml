@@ -1,0 +1,14 @@
+apiVersion: embserve.fhp.pt/v1
+kind: FarEdgeRoute
+metadata:
+  name: temperature2-direct-route
+spec:
+  route_type: single
+  egress:
+    pod_name: temperature-2
+    service_name: temperature_sensor
+    service_key: value
+  ingress:
+    pod_name: average-temperature
+    service_name: avg_temperature_sensor
+    service_key: temp2
