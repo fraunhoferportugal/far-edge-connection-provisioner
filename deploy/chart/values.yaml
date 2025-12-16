@@ -1,57 +1,26 @@
-nameOverride: ""
-fullnameOverride: ""
-
+nameOverride: ''
+fullnameOverride: ''
 image:
   repository: harbor.nbfc.io/mlsysops/fita/far-edge-connection-provisioner
   pullPolicy: Always
-  tag: ""
-
+  tag: 0.0.1
 imagePullSecrets: []
-
-# This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
 serviceAccount:
-  # Specifies whether a service account should be created
   create: true
-  # Automatically mount a ServiceAccount's API credentials?
   automount: true
-  # Annotations to add to the service account
   annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name: ""
-
+  name: ''
 role:
   extraRules: []
-
 clusterRole:
   extraRules: []
-
 mqttBroker:
-  host: ""
+  host: ''
   port: 1883
-  
-  # Not implemented
-  # protocol: mqtt # mqtt, mqtts, tcp, tls, ws, wss
-  # secretName: "mqtt-credentials"
-  # clientId: "far-edge-connection-provisioner"
-  # tls:
-  #   enabled: false
-  #   secretName: "mqtt-tls"
-  #   caCertPath: /etc/mqtt/tls/ca.crt
-  #   clientCertPath: /etc/mqtt/tls/client.crt
-  #   clientKeyPath: /etc/mqtt/tls/client.key
-  #   insecureSkipVerify: false
-
-# This is for setting Kubernetes Annotations to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
 podAnnotations: {}
-# This is for setting Kubernetes Labels to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
 podLabels: {}
-
 podSecurityContext:
   fsGroup: 2000
-
 securityContext:
   capabilities:
     drop:
@@ -59,25 +28,9 @@ securityContext:
   readOnlyRootFilesystem: true
   runAsNonRoot: true
   runAsUser: 1000
-
 resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
-
-# This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
 livenessProbe: {}
 readinessProbe: {}
-
 nodeSelector: {}
-
 tolerations: []
-
 affinity: {}
