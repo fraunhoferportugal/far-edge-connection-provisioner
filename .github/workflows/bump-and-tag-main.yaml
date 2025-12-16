@@ -1,0 +1,151 @@
+name: Tag on PR merged to main
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: read
+  packages: write
+
+jobs:
+  check-skip:
+    if: github.event.pull_request.merged == true
+    runs-on: self-hosted
+    outputs:
+      skip-tag: ${{ steps.check.outputs.skip-tag }}
+
+    steps:
+      - name: Check PR labels and target branch
+        id: check
+        run: |
+          TARGET_BRANCH=$(jq -r .pull_request.base.ref $GITHUB_EVENT_PATH)
+          PR_LABELS=$(jq -r '.pull_request.labels[].name' $GITHUB_EVENT_PATH || echo "")
+          echo "Target branch: $TARGET_BRANCH"
+          echo "PR labels: $PR_LABELS"
+
+          if [ "$TARGET_BRANCH" != "main" ] || echo "$PR_LABELS" | grep -q "no-tag"; then
+            echo "skip-tag=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip-tag=false" >> $GITHUB_OUTPUT
+          fi
+
+  create-tag:
+    needs: check-skip
+    if: needs.check-skip.outputs.skip-tag == 'false'
+    runs-on: self-hosted
+    outputs:
+      new-tag: ${{ steps.tag.outputs.new-tag }}
+      skip-app-release: ${{ steps.bump.outputs.skip-app-bump }}
+    steps:
+      - name: Install RelSync
+        run: pip install git+https://github.com/fraunhoferportugal/RelSync.git@main --break-system-packages
+
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Determine bump type from PR comments
+        id: bump
+        run: |
+          comments=$(gh api repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments \
+            --jq 'sort_by(.created_at) | reverse | .[].body')
+      
+          app_bump="patch"
+          skip_app_bump=false
+          chart_bump="patch"
+      
+          # Regex:
+          # !relsync bump (major|minor|patch|skip-app)
+          # optional: --chart-bump-type (major|minor|patch)
+          while IFS= read -r comment; do
+            if [[ "$comment" =~ !relsync[[:space:]]+bump[[:space:]]+(major|minor|patch|skip-app) ]]; then
+              bump="${BASH_REMATCH[1]}"
+              if [[ "$bump" == "skip-app" ]]; then
+                skip_app_bump=true
+              else
+                app_bump="$bump"
+              fi
+              
+              # Extract optional chart bump flag
+              if [[ "$comment" =~ --chart-bump-type[[:space:]]+(major|minor|patch) ]]; then
+                chart_bump="${BASH_REMATCH[1]}"
+              fi
+      
+              break
+            fi
+          done <<< "$comments"
+      
+          # If skip-app is used, override app bump to empty or a sentinel
+          if [[ "$skip_app_bump" == "true" ]]; then
+            echo "App bump skipped"
+          fi
+      
+          echo "app-bump=$app_bump" >> $GITHUB_OUTPUT
+          echo "chart-bump=$chart_bump" >> $GITHUB_OUTPUT
+          echo "skip-app-bump=$skip_app_bump" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Update and tag
+        id: tag
+        run: |
+          output=$(
+            relsync bump ${{ steps.bump.outputs.app-bump }} \
+              $([[ "${{ steps.bump.outputs.skip-app-bump }}" == "true" ]] && echo "--skip-repo-bump") \
+              --chart-bump-type "${{ steps.bump.outputs.chart-bump }}" \
+              --commit \
+              --create-tag \
+              -o json
+          )
+          new_tag=$(echo $output | jq '.newTag' -r)
+          echo "new-tag=$new_tag"
+          echo "new-tag=$new_tag" >> $GITHUB_OUTPUT
+        
+      - name: Push the new tag
+        run: |
+          git push
+          git push origin ${{ steps.tag.outputs.new-tag }}
+
+  release:
+    needs: create-tag
+    uses: ./.github/workflows/release.yaml
+    with:
+      tag: ${{ needs.create-tag.outputs.new-tag }}
+      skip-app-release: ${{ fromJSON(needs.create-tag.outputs.skip-app-release) }}
+
+  sync-development:
+    name: Sync development branch
+    needs: release
+    runs-on: self-hosted
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: development
+
+      - name: Set up Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Merge main into development
+        run: |
+          git fetch origin main
+          git merge --no-ff origin/main -m "Merge main into development after release ${{ needs.create-tag.outputs.new-tag }}" || true
+
+      - name: Push changes
+        run: |
+          git push origin development
