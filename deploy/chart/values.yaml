@@ -1,7 +1,7 @@
 nameOverride: ''
 fullnameOverride: ''
 image:
-  repository: harbor.nbfc.io/mlsysops/fita/far-edge-connection-provisioner
+  repository: ghcr.io/fraunhoferportugal/fita/components/far-edge-connection-provisioner
   pullPolicy: Always
   tag: 0.0.1
 imagePullSecrets: []
