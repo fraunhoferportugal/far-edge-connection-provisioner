@@ -19,12 +19,12 @@ permissions:
 jobs:
   lint:
     name: Lint code and check formatting
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - run: echo "Missing Linter"
 
   test:
     name: Test code
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - run: echo "Missing tests"
