@@ -22,7 +22,7 @@ Thanks for wanting to contribute! This file explains the minimal rules we follow
     - Python (>=3.12)
     - `make`
     - bash
-    - Docker (only if building images locally),
+    - Docker (only if building images locally)
     - Kubernetes cluster (for testing)
 - Build: `make build` / `make build-image`
 
