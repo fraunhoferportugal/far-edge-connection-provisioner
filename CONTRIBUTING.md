@@ -32,7 +32,7 @@ Thanks for wanting to contribute! This file explains the minimal rules we follow
 - PR body checklist:
     - Code compiles locally
     - Added/updated tests where applicable
-- At least two approving review from a maintainer required. Maintainers may request changes — please address them with new commits on the same branch.
+- At least two approving reviews from maintainers are required. Maintainers may request changes — please address them with new commits on the same branch.
 
 ### CI checks (required)
 If a CI job fails, fix the issue or add a clear PR comment explaining why a job can be skipped.
@@ -43,7 +43,7 @@ This repository uses labels to help with some management tasks.
 | Label | Description |
 | --- | --- |
 | `no-tag` | Keeps workflows from tagging the merge commit in the `main` branch and creating a release draft on pull requests merges targeting main. |
-| `needs-triage` | Default label, indicating a maintainer is to correctly tag the issue |
+| `needs-triage` | Default label, requiring a maintainer review to correctly tag the issue |
 
 ## Version Management
 FITA component versioning follows a [semantic versioning (semver)](https://semver.org/) inspired scheme.
@@ -73,18 +73,18 @@ This workflow is triggered either by a tag being pushed to the repository,
 by the `Tag on PR merged to main` workflow,
 or manually via a workflow dispatch using an existing tag as its argument.
 
-The workflow will first validate the provided tag is a valid SemVer string.
+The workflow will first validate if the provided tag is a valid SemVer string.
 Then, it uses [GoReleaser](https://goreleaser.com/) to build and publish container images 
 for the supported platforms (amd64, arm64 and armv7) to Github Container Registry (ghcr) 
 and to create a draft release in GitHub with the built artifacts.
 Finally, it publishes the corresponding Helm Chart to the GitHub Container Registry as an OCI artifact.
 
 Additionally, if the workflow was triggered by the `Tag on PR merged to main`,
-after the `Release` workflow completes, the `Tag on PR merged to main` workflow merges back Helm Chart updates to the `development` branch.
+the `Tag on PR merged to main` workflow merges back Helm Chart updates to the `development` branch, after the `Release` workflow completes.
 
 
 ## Issue reports and Feature Requests
-When opening an issue make sure you are targeting the correct FITA sub-repo. You can check them anytime in the [architecture docs](https://fraunhoferportugal.github.io/fita/docs/) and in the main repo in the [`components/` directory](https://github.com/fraunhoferportugal/fita/tree/development/components).
+When opening an issue make sure you are targeting the correct FITA sub-repo. You can check them anytime in the [architecture docs](https://fraunhoferportugal.github.io/fita/docs/) or in the main repo's [`components/` directory](https://github.com/fraunhoferportugal/fita/tree/development/components).
 
 In your issue report, please include the following:
 - Reproduction steps
